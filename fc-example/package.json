@@ -1,0 +1,28 @@
+{
+  "name": "personal-website-fc",
+  "version": "1.0.0",
+  "description": "个人网站阿里云函数计算后端",
+  "main": "contact-handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "aliyun fc deploy"
+  },
+  "keywords": [
+    "aliyun",
+    "function-compute",
+    "personal-website",
+    "contact-form"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.1",
+    "tablestore": "^5.4.0"
+  },
+  "devDependencies": {
+    "@alicloud/fc2": "^2.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+} 
