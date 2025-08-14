@@ -1,212 +1,235 @@
-# 个人网站静态页面 Demo
+# IndexedDB 前端持久化演示
 
-这是一个现代化的个人网站静态页面demo，设计用于部署到GitHub Pages，并与阿里云函数计算FC进行后端集成。
+这是一个完整的IndexedDB存储演示页面，用于验证浏览器本地数据库的存储和检索功能。
 
-## 🚀 项目特点
+## 功能特性
 
-- **响应式设计**: 完美适配桌面、平板和移动设备
-- **现代化UI**: 使用渐变色彩、毛玻璃效果和流畅动画
-- **交互体验**: 平滑滚动、技能条动画、表单验证
-- **云服务集成**: 与阿里云函数计算FC的API调用示例
-- **SEO友好**: 语义化HTML结构和meta标签
+### 🗄️ 数据持久化
+- 数据存储在浏览器的IndexedDB中
+- 关闭页面后数据仍然保留
+- 支持大量数据的本地存储
 
-## 📁 项目结构
+### 📝 数据操作
+- **添加记录**: 支持添加用户信息（姓名、邮箱、年龄、备注）
+- **编辑记录**: 点击编辑按钮可修改现有记录
+- **删除记录**: 支持单条记录删除
+- **清空数据**: 一键清空所有数据
 
-```
-RAG-example/
-├── index.html          # 主页面
-├── css/
-│   └── style.css      # 样式文件
-├── js/
-│   └── script.js      # JavaScript交互逻辑
-└── README.md          # 项目说明
-```
+### 🔍 搜索功能
+- 实时搜索，支持按姓名、邮箱或备注搜索
+- 防抖优化，避免频繁查询
+- 搜索结果实时显示
 
-## 🎨 功能模块
+### 📤 数据导出/导入
+- **导出数据**: 将所有数据导出为JSON文件
+- **导入数据**: 支持从JSON文件导入数据
+- 数据格式标准化
 
-### 1. 导航栏
-- 固定顶部导航
-- 响应式汉堡菜单
-- 平滑滚动导航
-- 滚动时动态样式变化
+### 📊 数据统计
+- 显示总记录数
+- 显示数据库大小
+- 实时更新统计信息
 
-### 2. 首页展示
-- 渐变背景英雄区域
-- 个人介绍卡片
-- 行动按钮
+### 📋 操作日志
+- 记录所有操作的历史
+- 不同操作类型用不同颜色标识
+- 自动限制日志数量
 
-### 3. 关于我
-- 个人介绍文字
-- 统计数据展示
-- 响应式布局
+### 📱 PWA支持
+- 可安装到手机桌面
+- 完全离线使用
+- 原生应用体验
+- 自动缓存和更新
 
-### 4. 技能展示
-- 技能卡片网格布局
-- 动态技能条动画
-- 图标和描述
+## 技术实现
 
-### 5. 项目展示
-- 项目卡片设计
-- 技术标签
-- 链接到GitHub和演示
-
-### 6. 联系表单
-- 表单验证
-- 与阿里云函数计算集成
-- 实时通知反馈
-
-## 🛠️ 部署步骤
-
-### 1. 部署到GitHub Pages
-
-1. 将代码推送到GitHub仓库
-2. 在仓库设置中启用GitHub Pages
-3. 选择分支和目录（通常是根目录）
-4. 访问生成的URL
-
-### 2. 配置阿里云函数计算
-
-1. **创建函数计算服务**:
-   ```bash
-   # 使用阿里云CLI创建服务
-   aliyun fc create-service --service-name personal-website-api
-   ```
-
-2. **创建函数**:
-   ```javascript
-   // 示例函数代码 (contact-handler.js)
-   exports.handler = async (event, context) => {
-       const { action, data } = JSON.parse(event.body);
-       
-       if (action === 'sendContactMessage') {
-           // 处理联系表单数据
-           const { name, email, message } = data;
-           
-           // 这里可以添加邮件发送、数据库存储等逻辑
-           console.log('收到联系消息:', { name, email, message });
-           
-           return {
-               statusCode: 200,
-               headers: {
-                   'Content-Type': 'application/json',
-                   'Access-Control-Allow-Origin': '*'
-               },
-               body: JSON.stringify({
-                   success: true,
-                   message: '消息已接收'
-               })
-           };
-       }
-       
-       return {
-           statusCode: 400,
-           body: JSON.stringify({ error: '无效的请求' })
-       };
-   };
-   ```
-
-3. **部署函数**:
-   ```bash
-   aliyun fc create-function \
-     --service-name personal-website-api \
-     --function-name contact-handler \
-     --runtime nodejs16 \
-     --handler index.handler \
-     --code contact-handler.js
-   ```
-
-4. **配置触发器**:
-   ```bash
-   aliyun fc create-trigger \
-     --service-name personal-website-api \
-     --function-name contact-handler \
-     --trigger-name http-trigger \
-     --trigger-type http
-   ```
-
-### 3. 更新前端配置
-
-在 `js/script.js` 中更新阿里云函数计算的端点URL：
-
+### 数据库结构
 ```javascript
-const FC_ENDPOINT = 'https://your-service.your-region.fc.aliyuncs.com/2016-08-15/proxy/personal-website-api/contact-handler';
+// 数据库名称: UserDatabase
+// 版本: 1
+// 存储对象: users
+
+// 用户数据结构
+{
+  id: 1,                    // 自动递增主键
+  name: "张三",             // 姓名
+  email: "zhangsan@example.com", // 邮箱
+  age: 25,                  // 年龄（可选）
+  notes: "备注信息",        // 备注（可选）
+  createdAt: "2024-01-01T00:00:00.000Z", // 创建时间
+  updatedAt: "2024-01-01T00:00:00.000Z"  // 更新时间（编辑时）
+}
 ```
 
-## 🔧 自定义配置
+### 索引设计
+- `name`: 姓名索引
+- `email`: 邮箱索引  
+- `createdAt`: 创建时间索引
 
-### 修改个人信息
+## 使用方法
 
-1. **更新HTML内容**:
-   - 修改 `index.html` 中的个人信息
-   - 更新项目描述和链接
-   - 调整联系信息
+### 1. 电脑端访问
+直接在浏览器中打开 `index.html` 文件即可。
 
-2. **自定义样式**:
-   - 修改 `css/style.css` 中的颜色变量
-   - 调整字体和间距
-   - 添加自定义动画
+### 2. 手机端访问（推荐）
 
-3. **调整功能**:
-   - 在 `js/script.js` 中添加新的交互功能
-   - 修改表单验证逻辑
-   - 扩展API调用
+#### 方法一：PWA离线应用（最推荐）
 
-### 颜色主题
+**优势**：
+- ✅ 完全离线使用，无需网络
+- ✅ 可安装到手机桌面
+- ✅ 原生应用体验
+- ✅ 数据持久化存储
 
-主要颜色变量：
-```css
---primary-color: #2563eb;
---secondary-color: #1d4ed8;
---gradient-primary: linear-gradient(135deg, #2563eb, #1d4ed8);
---gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+**使用步骤**：
+1. 在有网络环境下首次访问应用
+2. 将应用安装到手机桌面
+3. 之后即可完全离线使用
+
+**详细指南**：请查看 [PWA-GUIDE.md](./PWA-GUIDE.md) 文件
+
+#### 方法二：使用本地服务器
+
+1. **安装Node.js**
+   - 访问 https://nodejs.org/
+   - 下载并安装Node.js
+
+2. **启动服务器**
+   - **Windows**: 双击运行 `start.bat`
+   - **Mac/Linux**: 
+     ```bash
+     chmod +x start.sh  # 添加执行权限（首次运行）
+     ./start.sh         # 运行启动脚本
+     ```
+   - **手动启动**: 在项目目录运行 `node server.js`
+
+3. **手机访问**
+   - 确保手机和电脑连接同一WiFi网络
+   - 在手机浏览器中输入显示的IP地址（如：http://192.168.1.100:3000）
+
+#### 方法三：使用其他本地服务器
+
+如果不想安装Node.js，也可以使用其他工具：
+
+**Python 3:**
+```bash
+python -m http.server 3000
 ```
 
-## 📱 响应式断点
+**Python 2:**
+```bash
+python -m SimpleHTTPServer 3000
+```
 
-- **桌面**: > 768px
-- **平板**: 768px - 480px
-- **移动**: < 480px
+**PHP:**
+```bash
+php -S 0.0.0.0:3000
+```
 
-## 🔒 安全考虑
+#### 方法四：直接保存到手机（有限制）
 
-1. **CORS配置**: 确保阿里云函数计算正确配置CORS
-2. **API密钥**: 在生产环境中使用适当的认证机制
-3. **输入验证**: 前后端都要进行数据验证
-4. **HTTPS**: 确保所有通信都通过HTTPS进行
+- **Android**: 将HTML文件保存到手机，用浏览器打开（功能可能受限）
+- **iOS**: Safari对本地IndexedDB支持有限制，不推荐此方法
 
-## 🚀 性能优化
+### 2. 添加数据
+1. 在左侧表单中填写用户信息
+2. 点击"➕ 添加记录"按钮
+3. 数据将保存到IndexedDB中
 
-1. **图片优化**: 使用WebP格式和适当的尺寸
-2. **代码分割**: 考虑将CSS和JS文件拆分
-3. **缓存策略**: 设置适当的缓存头
-4. **CDN**: 使用CDN加速静态资源
+### 3. 搜索数据
+在搜索框中输入关键词，系统会自动搜索并显示匹配的记录。
 
-## 📊 分析工具
+### 4. 编辑数据
+1. 点击表格中的"编辑"按钮
+2. 表单会自动填充当前记录信息
+3. 修改后点击"💾 更新记录"保存
 
-可以集成以下分析工具：
-- Google Analytics
-- 百度统计
-- 阿里云日志服务
+### 5. 删除数据
+点击表格中的"删除"按钮，确认后删除该记录。
 
-## 🤝 贡献
+### 6. 导出数据
+点击"📤 导出数据"按钮，系统会下载包含所有数据的JSON文件。
 
-欢迎提交Issue和Pull Request来改进这个项目！
+### 7. 导入数据
+1. 点击"📥 导入数据"按钮
+2. 选择之前导出的JSON文件
+3. 系统会清空现有数据并导入新数据
 
-## 📄 许可证
+## 浏览器兼容性
+
+- ✅ Chrome 23+
+- ✅ Firefox 16+
+- ✅ Safari 10+
+- ✅ Edge 12+
+- ❌ Internet Explorer (不支持)
+
+## 注意事项
+
+1. **数据持久化**: 数据存储在浏览器本地，清除浏览器数据会导致数据丢失
+2. **存储限制**: IndexedDB的存储空间取决于浏览器和设备的可用空间
+3. **隐私模式**: 在隐私模式下，关闭标签页后数据会被清除
+4. **跨域限制**: IndexedDB遵循同源策略，不同域名无法访问彼此的数据库
+5. **手机访问**: 建议使用本地服务器方式访问，直接打开HTML文件功能可能受限
+6. **网络要求**: 手机访问需要确保与电脑在同一WiFi网络下
+
+## 开发说明
+
+### 项目结构
+```
+travel_pro/
+├── index.html      # 主页面
+├── styles.css      # 样式文件
+├── script.js       # JavaScript逻辑
+├── server.js       # Node.js本地服务器
+├── package.json    # 项目配置文件
+├── start.bat       # Windows启动脚本
+├── start.sh        # Linux/Mac启动脚本
+├── manifest.json   # PWA清单文件
+├── sw.js          # Service Worker
+├── PWA-GUIDE.md   # PWA使用指南
+└── README.md       # 说明文档
+```
+
+### 核心类
+- `IndexedDBManager`: 数据库管理类，处理所有IndexedDB操作
+- `IndexedDBDemo`: 应用主类，处理UI交互和业务逻辑
+
+### 主要方法
+- `init()`: 初始化数据库连接
+- `addUser()`: 添加用户记录
+- `getAllUsers()`: 获取所有用户
+- `searchUsers()`: 搜索用户
+- `updateUser()`: 更新用户信息
+- `deleteUser()`: 删除用户
+- `exportData()`: 导出数据
+- `importData()`: 导入数据
+
+## 故障排除
+
+### 常见问题
+
+1. **数据库连接失败**
+   - 检查浏览器是否支持IndexedDB
+   - 检查浏览器是否启用了隐私模式
+   - 尝试刷新页面重新初始化
+
+2. **数据不显示**
+   - 检查浏览器控制台是否有错误信息
+   - 确认数据库初始化成功
+   - 查看操作日志了解详细错误
+
+3. **导入数据失败**
+   - 确认JSON文件格式正确
+   - 检查文件是否损坏
+   - 查看操作日志了解具体错误
+
+### 调试方法
+
+1. 打开浏览器开发者工具
+2. 查看Console标签页的错误信息
+3. 在Application标签页中查看IndexedDB存储
+4. 查看操作日志了解详细执行过程
+
+## 许可证
 
 MIT License
-
-## 📞 支持
-
-如果您在使用过程中遇到问题，请：
-1. 查看GitHub Issues
-2. 提交新的Issue
-3. 联系开发者
-
----
-
-**注意**: 这是一个演示项目，在实际部署时请确保：
-- 更新所有示例URL和邮箱地址
-- 配置正确的阿里云函数计算端点
-- 添加适当的安全措施
-- 测试所有功能在不同设备上的表现 

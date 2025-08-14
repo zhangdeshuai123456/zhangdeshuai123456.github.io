@@ -3,254 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人网站</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>IndexedDB 存储演示</title>
+    <meta name="description" content="IndexedDB前端持久化演示应用，支持离线使用">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="IndexedDB Demo">
+    
+    <!-- PWA 支持 -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik05NiA0OEM3My45MDg2IDQ4IDU2IDY1LjkwODYgNTYgODhWMTQ0QzU2IDE2Ni4wOTEgNzMuOTA4NiAxODQgOTYgMTg0QzExOC4wOTEgMTg0IDEzNiAxNjYuMDkxIDEzNiAxNDRWODhDMTM2IDY1LjkwODYgMTE4LjA5MSA0OCA5NiA0OFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik05NiA2NEM4MS42NDA2IDY0IDcwIDc1LjY0MDYgNzAgOTBWMTA0QzcwIDExOC4zNTkgODEuNjQwNiAxMzAgOTYgMTMwQzExMC4zNTkgMTMwIDEyMiAxMTguMzU5IDEyMiAxMDRWOTBDMTIyIDc1LjY0MDYgMTEwLjM1OSA2NCA5NiA2NFoiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+">
+    
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <h2>我的个人网站</h2>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="#home" class="nav-link">首页</a></li>
-                <li><a href="#about" class="nav-link">关于我</a></li>
-                <li><a href="#skills" class="nav-link">技能</a></li>
-                <li><a href="#projects" class="nav-link">项目</a></li>
-                <li><a href="#contact" class="nav-link">联系我</a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    </nav>
+    <div class="container">
+        <header>
+            <h1>🗄️ IndexedDB 前端持久化演示</h1>
+            <p>验证浏览器本地数据库的存储和检索功能</p>
+        </header>
 
-    <!-- 首页部分 -->
-    <section id="home" class="hero">
-        <div class="hero-container">
-            <div class="hero-content">
-                <h1 class="hero-title">欢迎来到我的个人网站</h1>
-                <p class="hero-subtitle">全栈开发者 | 技术爱好者 | 创新者</p>
-                <div class="hero-buttons">
-                    <button class="btn btn-primary" onclick="scrollToSection('about')">了解更多</button>
-                    <button class="btn btn-secondary" onclick="scrollToSection('contact')">联系我</button>
+        <div class="demo-section">
+            <div class="control-panel">
+                <h2>📝 数据操作</h2>
+                
+                <div class="form-group">
+                    <label for="name">姓名:</label>
+                    <input type="text" id="name" placeholder="请输入姓名">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">邮箱:</label>
+                    <input type="email" id="email" placeholder="请输入邮箱">
+                </div>
+                
+                <div class="form-group">
+                    <label for="age">年龄:</label>
+                    <input type="number" id="age" placeholder="请输入年龄">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">备注:</label>
+                    <textarea id="notes" placeholder="请输入备注信息"></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button id="addBtn" class="btn btn-primary">➕ 添加记录</button>
+                    <button id="clearBtn" class="btn btn-danger">🗑️ 清空所有</button>
+                    <button id="exportBtn" class="btn btn-success">📤 导出数据</button>
+                    <button id="importBtn" class="btn btn-info">📥 导入数据</button>
                 </div>
             </div>
-            <div class="hero-image">
-                <div class="profile-card">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <h3>开发者</h3>
-                    <p>热爱技术，追求创新</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- 关于我部分 -->
-    <section id="about" class="about">
-        <div class="container">
-            <h2 class="section-title">关于我</h2>
-            <div class="about-content">
-                <div class="about-text">
-                    <p>我是一名充满激情的全栈开发者，专注于创建优秀的用户体验和高效的解决方案。</p>
-                    <p>我热爱学习新技术，并且喜欢将想法转化为现实。我相信技术可以改变世界，而我希望成为这个改变的一部分。</p>
-                    <div class="about-stats">
-                        <div class="stat">
-                            <h3>3+</h3>
-                            <p>年经验</p>
-                        </div>
-                        <div class="stat">
-                            <h3>20+</h3>
-                            <p>项目完成</p>
-                        </div>
-                        <div class="stat">
-                            <h3>5+</h3>
-                            <p>技术栈</p>
-                        </div>
+            <div class="data-display">
+                <h2>📊 数据展示</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalCount">0</span>
+                        <span class="stat-label">总记录数</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="dbSize">0 KB</span>
+                        <span class="stat-label">数据库大小</span>
                     </div>
                 </div>
-                <div class="about-image">
-                    <div class="image-placeholder">
-                        <i class="fas fa-code"></i>
-                    </div>
+                
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 搜索记录...">
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 技能部分 -->
-    <section id="skills" class="skills">
-        <div class="container">
-            <h2 class="section-title">技能专长</h2>
-            <div class="skills-grid">
-                <div class="skill-card">
-                    <div class="skill-icon">
-                        <i class="fab fa-html5"></i>
-                    </div>
-                    <h3>前端开发</h3>
-                    <p>HTML5, CSS3, JavaScript, React, Vue.js</p>
-                    <div class="skill-level">
-                        <div class="skill-bar" data-level="90"></div>
-                    </div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">
-                        <i class="fab fa-node-js"></i>
-                    </div>
-                    <h3>后端开发</h3>
-                    <p>Node.js, Python, Java, 数据库设计</p>
-                    <div class="skill-level">
-                        <div class="skill-bar" data-level="85"></div>
-                    </div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">
-                        <i class="fas fa-cloud"></i>
-                    </div>
-                    <h3>云服务</h3>
-                    <p>阿里云, AWS, 函数计算, 容器化</p>
-                    <div class="skill-level">
-                        <div class="skill-bar" data-level="80"></div>
-                    </div>
-                </div>
-                <div class="skill-card">
-                    <div class="skill-icon">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <h3>移动开发</h3>
-                    <p>React Native, Flutter, 原生开发</p>
-                    <div class="skill-level">
-                        <div class="skill-bar" data-level="75"></div>
-                    </div>
+                
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>邮箱</th>
+                                <th>年龄</th>
+                                <th>备注</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- 数据将在这里动态显示 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 项目展示部分 -->
-    <section id="projects" class="projects">
-        <div class="container">
-            <h2 class="section-title">项目展示</h2>
-            <div class="projects-grid">
-                <div class="project-card">
-                    <div class="project-image">
-                        <i class="fas fa-laptop-code"></i>
-                    </div>
-                    <div class="project-content">
-                        <h3>个人博客系统</h3>
-                        <p>基于React和Node.js构建的现代化博客系统，支持Markdown编辑和响应式设计。</p>
-                        <div class="project-tags">
-                            <span class="tag">React</span>
-                            <span class="tag">Node.js</span>
-                            <span class="tag">MongoDB</span>
-                        </div>
-                        <div class="project-links">
-                            <a href="#" class="project-link"><i class="fab fa-github"></i> 代码</a>
-                            <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i> 演示</a>
-                        </div>
-                    </div>
+        <div class="info-section">
+            <h2>ℹ️ 功能说明</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>💾 数据持久化</h3>
+                    <p>数据存储在浏览器的IndexedDB中，关闭页面后数据仍然保留</p>
                 </div>
-                <div class="project-card">
-                    <div class="project-image">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="project-content">
-                        <h3>电商平台</h3>
-                        <p>全栈电商解决方案，包含用户管理、商品管理、订单处理等功能。</p>
-                        <div class="project-tags">
-                            <span class="tag">Vue.js</span>
-                            <span class="tag">Python</span>
-                            <span class="tag">MySQL</span>
-                        </div>
-                        <div class="project-links">
-                            <a href="#" class="project-link"><i class="fab fa-github"></i> 代码</a>
-                            <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i> 演示</a>
-                        </div>
-                    </div>
+                <div class="info-card">
+                    <h3>🔍 搜索功能</h3>
+                    <p>支持按姓名、邮箱或备注进行实时搜索</p>
                 </div>
-                <div class="project-card">
-                    <div class="project-image">
-                        <i class="fas fa-mobile-alt"></i>
-                    </div>
-                    <div class="project-content">
-                        <h3>移动应用</h3>
-                        <p>跨平台移动应用，使用React Native开发，支持iOS和Android平台。</p>
-                        <div class="project-tags">
-                            <span class="tag">React Native</span>
-                            <span class="tag">Firebase</span>
-                            <span class="tag">Redux</span>
-                        </div>
-                        <div class="project-links">
-                            <a href="#" class="project-link"><i class="fab fa-github"></i> 代码</a>
-                            <a href="#" class="project-link"><i class="fas fa-external-link-alt"></i> 演示</a>
-                        </div>
-                    </div>
+                <div class="info-card">
+                    <h3>📤 数据导出</h3>
+                    <p>可以将所有数据导出为JSON文件</p>
+                </div>
+                <div class="info-card">
+                    <h3>📥 数据导入</h3>
+                    <p>支持从JSON文件导入数据</p>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- 联系我部分 -->
-    <section id="contact" class="contact">
-        <div class="container">
-            <h2 class="section-title">联系我</h2>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <div>
-                            <h3>邮箱</h3>
-                            <p>your.email@example.com</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fab fa-github"></i>
-                        <div>
-                            <h3>GitHub</h3>
-                            <p>github.com/yourusername</p>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fab fa-linkedin"></i>
-                        <div>
-                            <h3>LinkedIn</h3>
-                            <p>linkedin.com/in/yourusername</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="contact-form">
-                    <h3>发送消息</h3>
-                    <form id="contactForm">
-                        <div class="form-group">
-                            <input type="text" id="name" name="name" placeholder="您的姓名" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" id="email" name="email" placeholder="您的邮箱" required>
-                        </div>
-                        <div class="form-group">
-                            <textarea id="message" name="message" placeholder="您的消息" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">发送消息</button>
-                    </form>
-                </div>
+        <div class="log-section">
+            <h2>📋 操作日志</h2>
+            <div id="logContainer" class="log-container">
+                <!-- 操作日志将在这里显示 -->
             </div>
         </div>
-    </section>
+    </div>
 
-    <!-- 页脚 -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2024 我的个人网站. 保留所有权利.</p>
-        </div>
-    </footer>
-
-    <script src="js/script.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- PWA Service Worker 注册和状态管理 -->
+    <script>
+        // PWA状态管理
+        class PWAManager {
+            constructor() {
+                this.isOnline = navigator.onLine;
+                this.isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+                this.init();
+            }
+            
+            init() {
+                this.registerServiceWorker();
+                this.setupNetworkListeners();
+                this.setupInstallPrompt();
+                this.showStatusIndicator();
+            }
+            
+            // 注册Service Worker
+            registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/sw.js')
+                            .then((registration) => {
+                                console.log('Service Worker注册成功:', registration.scope);
+                                this.updateStatus('Service Worker已激活');
+                            })
+                            .catch((error) => {
+                                console.log('Service Worker注册失败:', error);
+                                this.updateStatus('Service Worker注册失败');
+                            });
+                    });
+                }
+            }
+            
+            // 设置网络状态监听
+            setupNetworkListeners() {
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.updateStatus('网络已连接');
+                    this.hideOfflineIndicator();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    this.updateStatus('网络已断开，但应用仍可离线使用');
+                    this.showOfflineIndicator();
+                });
+            }
+            
+            // 设置安装提示
+            setupInstallPrompt() {
+                let deferredPrompt;
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    deferredPrompt = e;
+                    this.showInstallButton(deferredPrompt);
+                });
+                
+                // 监听应用安装完成
+                window.addEventListener('appinstalled', () => {
+                    this.isInstalled = true;
+                    this.updateStatus('应用已安装到桌面');
+                    this.hideInstallButton();
+                });
+            }
+            
+            // 显示安装按钮
+            showInstallButton(deferredPrompt) {
+                if (document.getElementById('pwa-install-btn')) return;
+                
+                const installButton = document.createElement('button');
+                installButton.id = 'pwa-install-btn';
+                installButton.textContent = '📱 安装应用';
+                installButton.className = 'btn btn-primary';
+                installButton.style.position = 'fixed';
+                installButton.style.top = '20px';
+                installButton.style.right = '20px';
+                installButton.style.zIndex = '1000';
+                installButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                
+                installButton.addEventListener('click', () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('用户接受了安装提示');
+                                this.updateStatus('正在安装应用...');
+                            }
+                            deferredPrompt = null;
+                            this.hideInstallButton();
+                        });
+                    }
+                });
+                
+                document.body.appendChild(installButton);
+            }
+            
+            // 隐藏安装按钮
+            hideInstallButton() {
+                const installButton = document.getElementById('pwa-install-btn');
+                if (installButton) {
+                    installButton.remove();
+                }
+            }
+            
+            // 显示离线指示器
+            showOfflineIndicator() {
+                if (document.getElementById('offline-indicator')) return;
+                
+                const indicator = document.createElement('div');
+                indicator.id = 'offline-indicator';
+                indicator.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        background: #ff6b6b;
+                        color: white;
+                        text-align: center;
+                        padding: 8px;
+                        font-size: 14px;
+                        z-index: 9999;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    ">
+                        📱 离线模式 - 应用仍可正常使用
+                    </div>
+                `;
+                document.body.appendChild(indicator);
+            }
+            
+            // 隐藏离线指示器
+            hideOfflineIndicator() {
+                const indicator = document.getElementById('offline-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+            }
+            
+            // 显示状态指示器
+            showStatusIndicator() {
+                const statusDiv = document.createElement('div');
+                statusDiv.id = 'pwa-status';
+                statusDiv.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    z-index: 1000;
+                    opacity: 0.8;
+                    transition: opacity 0.3s;
+                `;
+                statusDiv.textContent = this.isOnline ? '在线' : '离线';
+                document.body.appendChild(statusDiv);
+                
+                // 3秒后隐藏状态指示器
+                setTimeout(() => {
+                    statusDiv.style.opacity = '0';
+                    setTimeout(() => statusDiv.remove(), 300);
+                }, 3000);
+            }
+            
+            // 更新状态
+            updateStatus(message) {
+                const statusDiv = document.getElementById('pwa-status');
+                if (statusDiv) {
+                    statusDiv.textContent = message;
+                    statusDiv.style.opacity = '1';
+                    
+                    setTimeout(() => {
+                        statusDiv.style.opacity = '0';
+                        setTimeout(() => statusDiv.remove(), 300);
+                    }, 2000);
+                }
+            }
+        }
+        
+        // 初始化PWA管理器
+        const pwaManager = new PWAManager();
+    </script>
 </body>
-</html> 
+</html>
