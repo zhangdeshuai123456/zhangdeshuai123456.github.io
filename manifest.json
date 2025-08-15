@@ -1,7 +1,7 @@
 {
-  "name": "IndexedDB 演示应用",
-  "short_name": "IndexedDB Demo",
-  "description": "IndexedDB前端持久化演示应用，支持离线使用和数据管理",
+  "name": "旅行助手 - 智能旅行规划工具",
+  "short_name": "旅行助手",
+  "description": "智能旅行助手，帮助您规划完美的旅行计划和管理预算",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#667eea",
@@ -21,16 +21,16 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "utilities", "education"],
+  "categories": ["travel", "productivity", "utilities"],
   "lang": "zh-CN",
   "scope": "/",
   "prefer_related_applications": false,
   "shortcuts": [
     {
-      "name": "添加记录",
-      "short_name": "添加",
-      "description": "快速添加新记录",
-      "url": "/?action=add",
+      "name": "创建旅行计划",
+      "short_name": "新计划",
+      "description": "快速创建新的旅行计划",
+      "url": "/?tab=plans",
       "icons": [
         {
           "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDggMzJDMzIuODA0IDMyIDIwIDQ0LjgwNCAyMCA2MFY3MkMyMCA4Ny4xOTYgMzIuODA0IDEwMCA0OCAxMDBDNjMuMTk2IDEwMCA3NiA4Ny4xOTYgNzYgNzJWNTZDNzYgNDQuODA0IDYzLjE5NiAzMiA0OCAzMloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
@@ -39,13 +39,25 @@
       ]
     },
     {
-      "name": "搜索记录",
-      "short_name": "搜索",
-      "description": "快速搜索记录",
-      "url": "/?action=search",
+      "name": "添加预算项目",
+      "short_name": "预算",
+      "description": "快速添加预算支出项目",
+      "url": "/?tab=budget",
       "icons": [
         {
-          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxjaXJjbGUgY3g9IjQyIiBjeT0iNDIiIHI9IjE2IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjQiLz4KPHBhdGggZD0iTTU4IDU4TDEwMCAxMDAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iNCIvPgo8L3N2Zz4=",
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDggMzJDMzIuODA0IDMyIDIwIDQ0LjgwNCAyMCA2MFY3MkMyMCA4Ny4xOTYgMzIuODA0IDEwMCA0OCAxMDBDNjMuMTk2IDEwMCA3NiA4Ny4xOTYgNzYgNzJWNTZDNzYgNDQuODA0IDYzLjE5NiAzMiA0OCAzMloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "行李清单",
+      "short_name": "清单",
+      "description": "管理行李打包清单",
+      "url": "/?tab=checklist",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNjQgNzJMMzIgNDBMMzYgMzZMNjQgNjRMMTAwIDI4TDEwNCAzMkw2NCA3MloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
           "sizes": "96x96"
         }
       ]

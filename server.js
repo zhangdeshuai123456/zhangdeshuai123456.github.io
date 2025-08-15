@@ -138,7 +138,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 IndexedDB演示服务器已启动！`);
+    console.log(`🚀 旅行助手服务器已启动！`);
     console.log(`📱 本地访问: http://localhost:${PORT}`);
     console.log(`🌐 网络访问: http://[您的IP地址]:${PORT}`);
     console.log(`📋 请确保手机和电脑在同一WiFi网络下`);

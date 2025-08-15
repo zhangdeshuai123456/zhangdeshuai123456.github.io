@@ -1,18 +1,21 @@
 {
-  "name": "indexeddb-demo",
+  "name": "travel-assistant",
   "version": "1.0.0",
-  "description": "IndexedDB前端持久化演示项目",
+  "description": "智能旅行助手应用，帮助用户规划旅行计划和管理预算",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "keywords": [
+    "travel",
+    "assistant",
+    "planner",
+    "budget",
+    "checklist",
+    "pwa",
     "indexeddb",
-    "demo",
-    "frontend",
-    "persistence",
-    "mobile"
+    "offline"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -21,6 +24,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/indexeddb-demo.git"
+    "url": "https://github.com/yourusername/travel-assistant.git"
   }
 }
