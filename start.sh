@@ -1,28 +1,24 @@
 #!/bin/bash
 
-echo ""
-echo "========================================"
-echo "   IndexedDB 演示服务器启动脚本"
-echo "========================================"
-echo ""
+echo "启动旅行助手应用..."
+echo
 
-# 检查Node.js是否安装
+echo "正在检查Node.js..."
 if ! command -v node &> /dev/null; then
-    echo "❌ 错误：未检测到Node.js"
-    echo ""
-    echo "请先安装Node.js："
-    echo "1. 访问 https://nodejs.org/"
-    echo "2. 下载并安装Node.js"
-    echo "3. 重新运行此脚本"
-    echo ""
-    read -p "按回车键退出..."
+    echo "错误: 未找到Node.js，请先安装Node.js"
+    echo "下载地址: https://nodejs.org/"
     exit 1
 fi
 
-echo "✅ Node.js 已安装"
-echo ""
+echo "Node.js已安装"
+echo
 
-# 启动服务器
-echo "🚀 正在启动服务器..."
-echo ""
-node server.js
+echo "正在安装依赖..."
+npm install
+
+echo
+echo "启动服务器..."
+echo "应用将在 http://localhost:3000 运行"
+echo "按 Ctrl+C 停止服务器"
+echo
+npm start

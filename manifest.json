@@ -1,66 +1,89 @@
 {
-  "name": "旅行助手 - 智能旅行规划工具",
+  "name": "旅行助手",
   "short_name": "旅行助手",
-  "description": "智能旅行助手，帮助您规划完美的旅行计划和管理预算",
+  "description": "专业的旅行计划管理应用，帮助您规划行程、管理预算、整理行李清单",
+  "version": "1.0.0",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#667eea",
-  "theme_color": "#667eea",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["travel", "productivity", "lifestyle"],
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik05NiA0OEM3My45MDg2IDQ4IDU2IDY1LjkwODYgNTYgODhWMTQ0QzU2IDE2Ni4wOTEgNzMuOTA4NiAxODQgOTYgMTg0QzExOC4wOTEgMTg0IDEzNiAxNjYuMDkxIDEzNiAxNDRWODhDMTM2IDY1LjkwODYgMTE4LjA5MSA0OCA5NiA0OFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik05NiA2NEM4MS42NDA2IDY0IDcwIDc1LjY0MDYgNzAgOTBWMTA0QzcwIDExOC4zNTkgODEuNjQwNiAxMzAgOTYgMTMwQzExMC4zNTkgMTMwIDEyMiAxMTguMzU5IDEyMiAxMDRWOTBDMTIyIDc1LjY0MDYgMTEwLjM1OSA2NCA5NiA2NFoiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9IiMzYjgyZjYiLz4KPHBhdGggZD0iTTk2IDQ4QzY5LjQ5IDQ4IDQ4IDY5LjQ5IDQ4IDk2czIxLjQ5IDQ4IDQ4IDQ4IDQ4LTIxLjQ5IDQ4LTQ4UzEyMi41MSA0OCA5NiA0OHptMCA4MGMtMTcuNjcgMC0zMi0xNC4zMy0zMi0zMnMxNC4zMy0zMiAzMi0zMiAzMiAxNC4zMyAzMiAzMi0xNC4zMyAzMi0zMiAzMnoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik05NiAxMjhjLTE3LjY3IDAtMzIgMTQuMzMtMzIgMzJzMTQuMzMgMzIgMzIgMzIgMzItMTQuMzMgMzItMzItMTQuMzMtMzItMzItMzJ6IiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik0yNTYgMTI4QzE5Ny4wOSAxMjggMTUyIDE3My4wOSAxNTIgMjMyVjM4NEMxNTIgNDQyLjkxIDE5Ny4wOSA0ODggMjU2IDQ4OEMzMTQuOTEgNDg4IDM2MCA0NDIuOTEgMzYwIDM4NFYyMzJDMzYwIDE3My4wOSAzMTQuOTEgMTI4IDI1NiAxMjhaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMjU2IDE3MkMyMTguMDUgMTcyIDE4NiAyMDQuMDUgMTg2IDI0MlYyNzZDMjg2IDMxMy45NSAyMTguMDUgMzQ2IDI1NiAzNDZDMjkzLjk1IDM0NiAzMjYgMzEzLjk1IDMyNiAyNzZWMjQyQzMyNiAyMDQuMDUgMjkzLjk1IDE3MiAyNTYgMTcyWiIgZmlsbD0iIzY2N2VlYSIvPgo8L3N2Zz4=",
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9IiMzYjgyZjYiLz4KPHBhdGggZD0iTTI1NiAxMjhDMTg1LjMxIDEyOCAxMjggMTg1LjMxIDEyOCAyNTZzNTcuMzEgMTI4IDEyOCAxMjggMTI4LTU3LjMxIDEyOC0xMjhTMzI2LjY5IDEyOCAyNTYgMTI4em0wIDIxM2MtNDcuMTEgMC04NS0zNy44OS04NS04NXMzNy44OS04NSA4NS04NSA4NSAzNy44OSA4NSA4NS0zNy44OSA4NS04NSA4NXoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNTYgMzQxYy00Ny4xMSAwLTg1IDM3Ljg5LTg1IDg1czM3Ljg5IDg1IDg1IDg1IDg1LTM3Ljg5IDg1LTg1LTM3Ljg5LTg1LTg1LTg1eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["travel", "productivity", "utilities"],
-  "lang": "zh-CN",
-  "scope": "/",
-  "prefer_related_applications": false,
   "shortcuts": [
     {
-      "name": "创建旅行计划",
-      "short_name": "新计划",
-      "description": "快速创建新的旅行计划",
-      "url": "/?tab=plans",
+      "name": "添加旅行计划",
+      "short_name": "添加旅行",
+      "description": "快速添加新的旅行计划",
+      "url": "/?action=add-trip",
       "icons": [
         {
-          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDggMzJDMzIuODA0IDMyIDIwIDQ0LjgwNCAyMCA2MFY3MkMyMCA4Ny4xOTYgMzIuODA0IDEwMCA0OCAxMDBDNjMuMTk2IDEwMCA3NiA4Ny4xOTYgNzYgNzJWNTZDNzYgNDQuODA0IDYzLjE5NiAzMiA0OCAzMloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiMzYjgyZjYiLz4KPHBhdGggZD0iTTQ4IDQ4aDMydjMySDQ4eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "添加预算项目",
-      "short_name": "预算",
-      "description": "快速添加预算支出项目",
-      "url": "/?tab=budget",
+      "name": "添加支出记录",
+      "short_name": "添加支出",
+      "description": "快速记录旅行支出",
+      "url": "/?action=add-expense",
       "icons": [
         {
-          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDggMzJDMzIuODA0IDMyIDIwIDQ0LjgwNCAyMCA2MFY3MkMyMCA4Ny4xOTYgMzIuODA0IDEwMCA0OCAxMDBDNjMuMTk2IDEwMCA3NiA4Ny4xOTYgNzYgNzJWNTZDNzYgNDQuODA0IDYzLjE5NiAzMiA0OCAzMloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiNmNTk0NzQiLz4KPHBhdGggZD0iTTQ4IDQ4aDMydjMySDQ4eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
           "sizes": "96x96"
         }
       ]
     },
     {
       "name": "行李清单",
-      "short_name": "清单",
-      "description": "管理行李打包清单",
-      "url": "/?tab=checklist",
+      "short_name": "行李清单",
+      "description": "查看和管理行李清单",
+      "url": "/?page=items",
       "icons": [
         {
-          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CjxwYXRoIGQ9Ik00OCAyNEMyNC4yNCAyNCA0IDQ4LjI0IDQgNzJWMTA4QzQgMTMxLjc2IDI0LjI0IDE1MiA0OCAxNTJDNzEuNzYgMTUyIDkyIDEzMS43NiA5MiAxMDhWNzJDNzIgNDguMjQgNzEuNzYgMjQgNDggMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNjQgNzJMMzIgNDBMMzYgMzZMNjQgNjRMMTAwIDI4TDEwNCAzMkw2NCA3MloiIGZpbGw9IiM2NjdlZWEiLz4KPC9zdmc+",
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMTIiIGZpbGw9IiMxMGJ5ODEiLz4KPHBhdGggZD0iTTQ4IDQ4aDMydjMySDQ4eiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+Cg==",
           "sizes": "96x96"
         }
       ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzc1IiBoZWlnaHQ9IjgxMiIgdmlld0JveD0iMCAwIDM3NSA4MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzNzUiIGhlaWdodD0iODEyIiBmaWxsPSIjZmZmZmZmIi8+CjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjMzNSIgaGVpZ2h0PSI3NzIiIHJ4PSIxNiIgZmlsbD0iI2Y4ZmFmYyIvPgo8dGV4dCB4PSIxODcuNSIgeT0iNjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzFhMjAzYiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+6LW15Lq65L2N5L2N5Y2WPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "375x812",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+travel",
+      "url": "/?action=%s"
     }
   ]
 }

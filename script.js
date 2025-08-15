@@ -1,3 +1,560 @@
+// 旅行数据库管理类
+class TravelDatabaseManager {
+    constructor() {
+        this.dbName = 'TravelAssistantDB';
+        this.dbVersion = 1;
+        this.db = null;
+    }
+
+    async init() {
+        return new Promise((resolve, reject) => {
+            if (!window.indexedDB) {
+                const error = new Error('浏览器不支持 IndexedDB');
+                this.log('浏览器不支持 IndexedDB', 'error');
+                reject(error);
+                return;
+            }
+
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = () => {
+                this.log('数据库打开失败', 'error');
+                reject(request.error);
+            };
+
+            request.onsuccess = () => {
+                this.db = request.result;
+                this.log('数据库连接成功', 'success');
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                // 创建旅行计划存储
+                if (!db.objectStoreNames.contains('trips')) {
+                    const tripsStore = db.createObjectStore('trips', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    tripsStore.createIndex('name', 'name', { unique: false });
+                    tripsStore.createIndex('destination', 'destination', { unique: false });
+                    tripsStore.createIndex('startDate', 'startDate', { unique: false });
+                }
+
+                // 创建支出存储
+                if (!db.objectStoreNames.contains('expenses')) {
+                    const expensesStore = db.createObjectStore('expenses', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    expensesStore.createIndex('name', 'name', { unique: false });
+                    expensesStore.createIndex('category', 'category', { unique: false });
+                    expensesStore.createIndex('tripId', 'tripId', { unique: false });
+                    expensesStore.createIndex('createdAt', 'createdAt', { unique: false });
+                }
+
+                // 创建行李物品存储
+                if (!db.objectStoreNames.contains('items')) {
+                    const itemsStore = db.createObjectStore('items', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    itemsStore.createIndex('name', 'name', { unique: false });
+                    itemsStore.createIndex('category', 'category', { unique: false });
+                    itemsStore.createIndex('tripId', 'tripId', { unique: false });
+                    itemsStore.createIndex('packed', 'packed', { unique: false });
+                }
+
+                this.log('数据库结构创建成功', 'success');
+            };
+        });
+    }
+
+    // 旅行计划相关方法
+    async addTrip(tripData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readwrite');
+            const store = transaction.objectStore('trips');
+
+            const trip = {
+                ...tripData,
+                createdAt: new Date().toISOString()
+            };
+
+            const request = store.add(trip);
+
+            request.onsuccess = () => {
+                this.log(`旅行计划 "${tripData.name}" 创建成功`, 'success');
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('创建旅行计划失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getAllTrips() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readonly');
+            const store = transaction.objectStore('trips');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取旅行计划失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getTrip(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readonly');
+            const store = transaction.objectStore('trips');
+            const request = store.get(parseInt(id));
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取旅行计划失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async updateTrip(id, updateData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readwrite');
+            const store = transaction.objectStore('trips');
+            const getRequest = store.get(parseInt(id));
+
+            getRequest.onsuccess = () => {
+                const trip = getRequest.result;
+                if (trip) {
+                    const updatedTrip = {
+                        ...trip,
+                        ...updateData,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    const putRequest = store.put(updatedTrip);
+                    putRequest.onsuccess = () => {
+                        this.log(`旅行计划 "${trip.name}" 更新成功`, 'success');
+                        resolve(putRequest.result);
+                    };
+                    putRequest.onerror = () => {
+                        this.log('更新旅行计划失败', 'error');
+                        reject(putRequest.error);
+                    };
+                } else {
+                    reject(new Error('旅行计划不存在'));
+                }
+            };
+
+            getRequest.onerror = () => {
+                this.log('获取旅行计划失败', 'error');
+                reject(getRequest.error);
+            };
+        });
+    }
+
+    async removeTrip(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readwrite');
+            const store = transaction.objectStore('trips');
+            const request = store.delete(parseInt(id));
+
+            request.onsuccess = () => {
+                this.log(`旅行计划 ID: ${id} 删除成功`, 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('删除旅行计划失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async clearTrips() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['trips'], 'readwrite');
+            const store = transaction.objectStore('trips');
+            const request = store.clear();
+
+            request.onsuccess = () => {
+                this.log('所有旅行计划已清空', 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('清空旅行计划失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    // 支出相关方法
+    async addExpense(expenseData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readwrite');
+            const store = transaction.objectStore('expenses');
+
+            const expense = {
+                ...expenseData,
+                createdAt: new Date().toISOString()
+            };
+
+            const request = store.add(expense);
+
+            request.onsuccess = () => {
+                this.log(`支出项目 "${expenseData.name}" 添加成功`, 'success');
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('添加支出失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getAllExpenses() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readonly');
+            const store = transaction.objectStore('expenses');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取支出数据失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getExpense(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readonly');
+            const store = transaction.objectStore('expenses');
+            const request = store.get(parseInt(id));
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取支出记录失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async updateExpense(id, updateData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readwrite');
+            const store = transaction.objectStore('expenses');
+            const getRequest = store.get(parseInt(id));
+
+            getRequest.onsuccess = () => {
+                const expense = getRequest.result;
+                if (expense) {
+                    const updatedExpense = {
+                        ...expense,
+                        ...updateData,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    const putRequest = store.put(updatedExpense);
+                    putRequest.onsuccess = () => {
+                        this.log(`支出记录 "${expense.name}" 更新成功`, 'success');
+                        resolve(putRequest.result);
+                    };
+                    putRequest.onerror = () => {
+                        this.log('更新支出记录失败', 'error');
+                        reject(putRequest.error);
+                    };
+                } else {
+                    reject(new Error('支出记录不存在'));
+                }
+            };
+
+            getRequest.onerror = () => {
+                this.log('获取支出记录失败', 'error');
+                reject(getRequest.error);
+            };
+        });
+    }
+
+    async removeExpense(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readwrite');
+            const store = transaction.objectStore('expenses');
+            const request = store.delete(parseInt(id));
+
+            request.onsuccess = () => {
+                this.log(`支出记录 ID: ${id} 删除成功`, 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('删除支出记录失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async clearExpenses() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['expenses'], 'readwrite');
+            const store = transaction.objectStore('expenses');
+            const request = store.clear();
+
+            request.onsuccess = () => {
+                this.log('所有支出记录已清空', 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('清空支出记录失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    // 行李物品相关方法
+    async addItem(itemData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readwrite');
+            const store = transaction.objectStore('items');
+
+            const item = {
+                ...itemData,
+                createdAt: new Date().toISOString()
+            };
+
+            const request = store.add(item);
+
+            request.onsuccess = () => {
+                this.log(`行李物品 "${itemData.name}" 添加成功`, 'success');
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('添加行李物品失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getAllItems() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readonly');
+            const store = transaction.objectStore('items');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取行李清单失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async getItem(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readonly');
+            const store = transaction.objectStore('items');
+            const request = store.get(parseInt(id));
+
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+
+            request.onerror = () => {
+                this.log('获取行李物品失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async updateItem(id, updateData) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readwrite');
+            const store = transaction.objectStore('items');
+            const getRequest = store.get(parseInt(id));
+
+            getRequest.onsuccess = () => {
+                const item = getRequest.result;
+                if (item) {
+                    const updatedItem = {
+                        ...item,
+                        ...updateData,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    const putRequest = store.put(updatedItem);
+                    putRequest.onsuccess = () => {
+                        this.log(`行李物品 "${item.name}" 更新成功`, 'success');
+                        resolve(putRequest.result);
+                    };
+                    putRequest.onerror = () => {
+                        this.log('更新行李物品失败', 'error');
+                        reject(putRequest.error);
+                    };
+                } else {
+                    reject(new Error('物品不存在'));
+                }
+            };
+
+            getRequest.onerror = () => {
+                this.log('获取行李物品失败', 'error');
+                reject(getRequest.error);
+            };
+        });
+    }
+
+    async removeItem(id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readwrite');
+            const store = transaction.objectStore('items');
+            const request = store.delete(parseInt(id));
+
+            request.onsuccess = () => {
+                this.log(`行李物品 ID: ${id} 删除成功`, 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('删除行李物品失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+
+    async clearItems() {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('数据库未初始化'));
+                return;
+            }
+
+            const transaction = this.db.transaction(['items'], 'readwrite');
+            const store = transaction.objectStore('items');
+            const request = store.clear();
+
+            request.onsuccess = () => {
+                this.log('所有行李物品已清空', 'success');
+                resolve();
+            };
+
+            request.onerror = () => {
+                this.log('清空行李清单失败', 'error');
+                reject(request.error);
+            };
+        });
+    }
+}
+
 // 旅行助手应用主类
 class TravelAssistant {
     constructor() {
@@ -5,7 +562,6 @@ class TravelAssistant {
         this.currentTrips = [];
         this.currentExpenses = [];
         this.currentItems = [];
-        this.init();
     }
 
     async init() {
@@ -28,91 +584,220 @@ class TravelAssistant {
         }
     }
 
-    bindEvents() {
-        // 标签页切换 - 添加动画效果
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
-                this.addRippleEffect(e.target);
+    // 绑定导航事件
+    bindNavigationEvents() {
+        // 底部导航栏事件委托
+        const bottomNav = document.querySelector('.bottom-nav');
+        if (bottomNav) {
+            bottomNav.addEventListener('click', (e) => {
+                const navItem = e.target.closest('.nav-item');
+                if (navItem) {
+                    const page = navItem.dataset.page;
+                    if (page) {
+                        this.switchPage(page);
+                    }
+                }
             });
-        });
-
-        // 旅行计划相关事件
-        document.getElementById('addTripBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.addTrip();
-        });
-        document.getElementById('clearTripsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.clearTrips();
-        });
-        document.getElementById('exportTripsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.exportTrips();
-        });
-        document.getElementById('importTripsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.importTrips();
-        });
-        document.getElementById('searchTripsInput').addEventListener('input', (e) => this.searchTrips(e.target.value));
-
-        // 预算管理相关事件
-        document.getElementById('addExpenseBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.addExpense();
-        });
-        document.getElementById('clearExpensesBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.clearExpenses();
-        });
-        document.getElementById('exportExpensesBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.exportExpenses();
-        });
-        document.getElementById('importExpensesBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.importExpenses();
-        });
-        document.getElementById('searchExpensesInput').addEventListener('input', (e) => this.searchExpenses(e.target.value));
-
-        // 行李清单相关事件
-        document.getElementById('addItemBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.addItem();
-        });
-        document.getElementById('clearItemsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.clearItems();
-        });
-        document.getElementById('exportItemsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.exportItems();
-        });
-        document.getElementById('importItemsBtn').addEventListener('click', (e) => {
-            this.addRippleEffect(e.target);
-            this.importItems();
-        });
-        document.getElementById('searchItemsInput').addEventListener('input', (e) => this.searchItems(e.target.value));
-
-        // 表单回车提交
-        document.getElementById('tripName').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.addTrip();
-        });
-        document.getElementById('expenseName').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.addExpense();
-        });
-        document.getElementById('itemName').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.addItem();
-        });
-
-        // 添加表单验证和实时反馈
-        this.setupFormValidation();
+        }
         
-        // 添加键盘快捷键
-        this.setupKeyboardShortcuts();
+        console.log('导航事件已绑定');
+    }
+
+    // 页面切换方法
+    switchPage(pageName) {
+        // 隐藏所有页面
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
         
-        // 添加触摸手势支持
-        this.setupTouchGestures();
+        // 显示目标页面
+        const targetPage = document.getElementById(`${pageName}-page`);
+        if (targetPage) {
+            targetPage.classList.add('active');
+        }
+        
+        // 更新导航状态
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        const activeNavItem = document.querySelector(`[data-page="${pageName}"]`);
+        if (activeNavItem) {
+            activeNavItem.classList.add('active');
+        }
+        
+        // 加载页面数据
+        this.loadPageData(pageName);
+        
+        // 更新页面标题
+        this.updatePageTitle(pageName);
+        
+        // 滚动到顶部
+        window.scrollTo(0, 0);
+    }
+
+    // 获取当前页面
+    getCurrentPage() {
+        const activePage = document.querySelector('.page.active');
+        if (activePage) {
+            return activePage.id.replace('-page', '');
+        }
+        return 'home';
+    }
+
+    // 加载页面数据
+    async loadPageData(pageName) {
+        switch (pageName) {
+            case 'home':
+                await this.loadHomeData();
+                break;
+            case 'trips':
+                await this.loadTrips();
+                break;
+            case 'budget':
+                await this.loadExpenses();
+                break;
+            case 'checklist':
+                await this.loadItems();
+                break;
+            case 'stats':
+                this.updateAllStats();
+                break;
+        }
+    }
+
+    // 更新页面标题
+    updatePageTitle(pageName) {
+        const pageTitles = {
+            'home': '首页',
+            'trips': '旅行计划',
+            'budget': '预算管理',
+            'checklist': '行李清单',
+            'stats': '统计信息'
+        };
+        
+        const title = pageTitles[pageName] || '旅行助手';
+        document.title = `${title} - 旅行助手`;
+    }
+
+    // 显示模态框
+    showModal(title, content) {
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('modal');
+        
+        if(!modalOverlay || !modal) return;
+        
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h3>${title}</h3>
+                <button class="close-btn" onclick="app.hideModal()">×</button>
+            </div>
+            <div class="modal-body">
+                ${content}
+            </div>
+        `;
+        
+        modalOverlay.style.display = 'flex';
+        
+        // 添加动画效果
+        setTimeout(() => {
+            modal.classList.add('modal-show');
+        }, 10);
+    }
+
+    // 隐藏模态框
+    hideModal() {
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('modal');
+        
+        if(!modalOverlay || !modal) return;
+        
+        modal.classList.remove('modal-show');
+        
+        setTimeout(() => {
+            modalOverlay.style.display = 'none';
+        }, 300);
+    }
+
+    // 切换快速操作菜单
+    toggleQuickActions() {
+        const quickActions = document.getElementById('quickActionsMenu');
+        if (quickActions) {
+            if (quickActions.style.display === 'none') {
+                quickActions.style.display = 'block';
+            } else {
+                quickActions.style.display = 'none';
+            }
+        }
+    }
+
+    // 隐藏快速操作菜单
+    hideQuickActions() {
+        const quickActions = document.getElementById('quickActionsMenu');
+        if (quickActions) {
+            quickActions.style.display = 'none';
+        }
+    }
+
+    // 绑定事件
+    bindEvents() {
+        // 模态框事件
+        document.addEventListener('click', (e) => {
+            // 关闭模态框
+            if (e.target.classList.contains('modal-overlay')) {
+                this.hideModal();
+            }
+            
+            // 关闭按钮
+            if (e.target.classList.contains('close-btn')) {
+                this.hideModal();
+            }
+        });
+
+        // 搜索功能
+        const searchInput = document.getElementById('searchTrips');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+        }
+
+        // 删除重复的底部导航事件绑定，因为已在bindNavigationEvents中实现
+
+        // 通知铃铛
+        const notificationBell = document.querySelector('.notification-bell');
+        if (notificationBell) {
+            notificationBell.addEventListener('click', () => {
+                this.showNotifications();
+            });
+        }
+
+        // 表单提交事件
+        document.addEventListener('submit', (e) => {
+            if (e.target.classList.contains('add-form')) {
+                e.preventDefault();
+                this.handleFormSubmit(e.target);
+            }
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideModal();
+                this.hideQuickActions();
+            }
+        });
+
+        // 浮动操作按钮
+        const fab = document.getElementById('fab');
+        if (fab) {
+            fab.addEventListener('click', () => {
+                this.showQuickActions();
+            });
+        }
+
+        // 触摸手势支持
+        this.bindTouchEvents();
     }
 
     // 标签页切换
@@ -129,6 +814,104 @@ class TravelAssistant {
         this.updateTripSelects();
     }
 
+    // 加载首页数据
+    async loadHomeData() {
+        try {
+            // 加载最近的旅行计划
+            const recentTrips = this.currentTrips.slice(0, 3);
+            this.renderRecentTrips(recentTrips);
+            
+            // 更新统计信息
+            this.updateHomeStats();
+        } catch (error) {
+            console.error('加载首页数据失败:', error);
+        }
+    }
+
+    // 渲染最近的旅行计划
+    renderRecentTrips(trips) {
+        const container = document.getElementById('recentTrips');
+        if (!container) return;
+        
+        if (trips.length === 0) {
+            // 保留原始的空状态显示
+            return;
+        }
+        
+        // 移除原始的空状态显示
+        container.innerHTML = '';
+        
+        // 创建并添加旅行卡片
+        trips.forEach(trip => {
+            const tripCard = document.createElement('div');
+            tripCard.className = 'trip-card';
+            tripCard.innerHTML = `
+                <h4>${this.escapeHtml(trip.name)}</h4>
+                <p>${this.escapeHtml(trip.destination)}</p>
+                <span class="trip-date">${new Date(trip.startDate).toLocaleDateString()}</span>
+            `;
+            tripCard.onclick = () => this.showTripDetail(trip.id);
+            container.appendChild(tripCard);
+        });
+    }
+
+    // 渲染最近的支出
+    renderRecentExpenses(expenses) {
+        const container = document.getElementById('recentExpenses');
+        if (!container) return;
+        
+        if (expenses.length === 0) {
+            container.innerHTML = '<p class="empty-state">暂无支出记录</p>';
+            return;
+        }
+        
+        container.innerHTML = expenses.map(expense => `
+            <div class="expense-item">
+                <span class="expense-name">${this.escapeHtml(expense.name)}</span>
+                <span class="expense-amount">¥${expense.amount.toLocaleString()}</span>
+            </div>
+        `).join('');
+    }
+
+    // 渲染待打包的物品
+    renderUnpackedItems(items) {
+        const container = document.getElementById('unpackedItems');
+        if (!container) return;
+        
+        if (items.length === 0) {
+            container.innerHTML = '<p class="empty-state">所有物品已打包</p>';
+            return;
+        }
+        
+        container.innerHTML = items.map(item => `
+            <div class="item-card">
+                <span class="item-name">${this.escapeHtml(item.name)}</span>
+                <span class="item-category">${this.getItemCategoryText(item.category)}</span>
+            </div>
+        `).join('');
+    }
+
+    // 更新首页统计
+    updateHomeStats() {
+        const totalTrips = this.currentTrips.length;
+        const totalBudget = this.currentTrips.reduce((sum, trip) => sum + (parseFloat(trip.budget) || 0), 0);
+        const packedItems = this.currentItems.filter(item => item.packed).length;
+        
+        // 更新统计显示
+        const statsElements = {
+            'totalTrips': totalTrips,
+            'totalBudget': `¥${totalBudget.toLocaleString()}`,
+            'packedItems': packedItems
+        };
+        
+        Object.entries(statsElements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
+    }
+
     // 加载所有数据
     async loadAllData() {
         await Promise.all([
@@ -140,10 +923,15 @@ class TravelAssistant {
 
     // 更新所有统计
     updateAllStats() {
-        this.updateTripStats();
-        this.updateExpenseStats();
-        this.updateItemStats();
-        this.updateOverallStats();
+        try {
+            this.updateTripStats();
+            this.updateExpenseStats();
+            this.updateItemStats();
+            this.updateOverallStats();
+            this.updateHomeStats();
+        } catch (error) {
+            console.error('更新统计信息失败:', error);
+        }
     }
 
     // ==================== 旅行计划管理 ====================
@@ -217,31 +1005,51 @@ class TravelAssistant {
     }
 
     renderTrips(trips) {
-        const tbody = document.getElementById('tripsTableBody');
-        tbody.innerHTML = '';
+        const tripsList = document.getElementById('tripsList');
+        if (!tripsList) {
+            console.error('找不到tripsList元素');
+            return;
+        }
+        
+        tripsList.innerHTML = '';
 
         if (trips.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #64748b;">暂无旅行计划</td></tr>';
+            tripsList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">✈️</div>
+                    <p>暂无旅行计划</p>
+                    <button class="btn btn-primary" onclick="app.showAddTripModal()">创建第一个计划</button>
+                </div>
+            `;
             return;
         }
 
         trips.forEach(trip => {
-            const row = document.createElement('tr');
             const status = this.getTripStatus(trip);
-            row.innerHTML = `
-                <td>${trip.id}</td>
-                <td>${this.escapeHtml(trip.name)}</td>
-                <td>${this.escapeHtml(trip.destination)}</td>
-                <td>${new Date(trip.startDate).toLocaleDateString()}</td>
-                <td>${new Date(trip.endDate).toLocaleDateString()}</td>
-                <td>¥${trip.budget.toLocaleString()}</td>
-                <td><span class="status-badge status-${status}">${this.getStatusText(status)}</span></td>
-                <td>
-                    <button class="action-btn edit-btn" onclick="app.editTrip(${trip.id})">编辑</button>
-                    <button class="action-btn delete-btn" onclick="app.deleteTrip(${trip.id})">删除</button>
-                </td>
+            const tripCard = document.createElement('div');
+            tripCard.className = 'trip-card';
+            tripCard.innerHTML = `
+                <div class="trip-header">
+                    <h3>${this.escapeHtml(trip.name)}</h3>
+                    <span class="trip-status ${status}">${this.getStatusText(status)}</span>
+                </div>
+                <div class="trip-info">
+                    <span>📍 ${this.escapeHtml(trip.destination)}</span>
+                    <span>🗓️ ${new Date(trip.startDate).toLocaleDateString()} - ${new Date(trip.endDate).toLocaleDateString()}</span>
+                </div>
+                <div class="trip-budget">预算: ¥${(trip.budget || 0).toLocaleString()}</div>
+                <div class="trip-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="app.editTrip(${trip.id})">编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteTrip(${trip.id})">删除</button>
+                </div>
             `;
-            tbody.appendChild(row);
+            tripCard.addEventListener('click', (e) => {
+                // 防止点击按钮时触发卡片点击事件
+                if (!e.target.closest('button')) {
+                    this.showTripDetail(trip.id);
+                }
+            });
+            tripsList.appendChild(tripCard);
         });
     }
 
@@ -262,6 +1070,10 @@ class TravelAssistant {
             'completed': '已完成'
         };
         return statusMap[status] || status;
+    }
+
+    getTripStatusText(trip) {
+        return this.getStatusText(this.getTripStatus(trip));
     }
 
     async searchTrips(query) {
@@ -384,30 +1196,46 @@ class TravelAssistant {
     }
 
     renderExpenses(expenses) {
-        const tbody = document.getElementById('expensesTableBody');
-        tbody.innerHTML = '';
+        const expensesList = document.getElementById('expensesList');
+        if (!expensesList) {
+            console.error('找不到expensesList元素');
+            return;
+        }
+        
+        expensesList.innerHTML = '';
 
         if (expenses.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #64748b;">暂无支出记录</td></tr>';
+            expensesList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💰</div>
+                    <p>暂无支出记录</p>
+                    <button class="btn btn-primary" onclick="app.showAddExpenseModal()">添加第一笔支出</button>
+                </div>
+            `;
             return;
         }
 
         expenses.forEach(expense => {
-            const row = document.createElement('tr');
             const trip = this.currentTrips.find(t => t.id === expense.tripId);
-            row.innerHTML = `
-                <td>${expense.id}</td>
-                <td>${this.escapeHtml(expense.name)}</td>
-                <td>¥${expense.amount.toLocaleString()}</td>
-                <td>${this.getCategoryText(expense.category)}</td>
-                <td>${trip ? this.escapeHtml(trip.name) : '-'}</td>
-                <td>${new Date(expense.createdAt).toLocaleDateString()}</td>
-                <td>
-                    <button class="action-btn edit-btn" onclick="app.editExpense(${expense.id})">编辑</button>
-                    <button class="action-btn delete-btn" onclick="app.deleteExpense(${expense.id})">删除</button>
-                </td>
+            const expenseCard = document.createElement('div');
+            expenseCard.className = 'expense-card';
+            expenseCard.innerHTML = `
+                <div class="expense-header">
+                    <h3>${this.escapeHtml(expense.name)}</h3>
+                    <span class="expense-amount">¥${expense.amount.toLocaleString()}</span>
+                </div>
+                <div class="expense-info">
+                    <span class="expense-category">${this.getCategoryText(expense.category)}</span>
+                    <span>${expense.date ? new Date(expense.date).toLocaleDateString() : new Date(expense.createdAt).toLocaleDateString()}</span>
+                    ${trip ? `<span>旅行: ${this.escapeHtml(trip.name)}</span>` : ''}
+                </div>
+                ${expense.notes ? `<p class="expense-notes">${this.escapeHtml(expense.notes)}</p>` : ''}
+                <div class="expense-actions">
+                    <button class="btn btn-sm btn-secondary" onclick="app.editExpense(${expense.id})">编辑</button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteExpense(${expense.id})">删除</button>
+                </div>
             `;
-            tbody.appendChild(row);
+            expensesList.appendChild(expenseCard);
         });
     }
 
@@ -497,7 +1325,7 @@ class TravelAssistant {
                 category,
                 tripId: tripId || null,
                 notes,
-                isPacked: false
+                packed: false
             });
 
             // 清空表单
@@ -511,30 +1339,110 @@ class TravelAssistant {
     }
 
     renderItems(items) {
-        const tbody = document.getElementById('itemsTableBody');
-        tbody.innerHTML = '';
+        const itemsList = document.getElementById('itemsList');
+        if (!itemsList) {
+            console.error('找不到itemsList元素');
+            return;
+        }
+        
+        itemsList.innerHTML = '';
 
         if (items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b;">暂无行李物品</td></tr>';
+            itemsList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💰</div>
+                    <p>暂无行李物品</p>
+                    <button class="btn btn-primary" onclick="app.showAddItemModal()">添加第一个物品</button>
+                </div>
+            `;
             return;
         }
 
+        // 更新打包进度
+        const packedCount = items.filter(item => item.packed).length;
+        const totalCount = items.length;
+        const packingPercentage = totalCount > 0 ? Math.round((packedCount / totalCount) * 100) : 0;
+        
+        document.getElementById('packedCount').textContent = packedCount;
+        document.getElementById('totalCount').textContent = totalCount;
+        document.getElementById('packingPercentage').textContent = `${packingPercentage}%`;
+        document.getElementById('packingProgress').style.width = `${packingPercentage}%`;
+
+        // 按分类分组显示物品
+        const categories = {};
         items.forEach(item => {
-            const row = document.createElement('tr');
-            const trip = this.currentTrips.find(t => t.id === item.tripId);
-            row.innerHTML = `
-                <td>${item.id}</td>
-                <td>${this.escapeHtml(item.name)}</td>
-                <td>${this.getItemCategoryText(item.category)}</td>
-                <td>${trip ? this.escapeHtml(trip.name) : '-'}</td>
-                <td><span class="status-badge status-${item.isPacked ? 'packed' : 'unpacked'}">${item.isPacked ? '已打包' : '待打包'}</span></td>
-                <td>
-                    <button class="action-btn toggle-btn" onclick="app.toggleItemPacked('${item.id}', this.checked)">${item.isPacked ? '取消打包' : '标记打包'}</button>
-                    <button class="action-btn edit-btn" onclick="app.editItem('${item.id}')">编辑</button>
-                    <button class="action-btn delete-btn" onclick="app.deleteItem('${item.id}')">删除</button>
-                </td>
-            `;
-            tbody.appendChild(row);
+            if (!categories[item.category]) {
+                categories[item.category] = [];
+            }
+            categories[item.category].push(item);
+        });
+
+        // 先显示未打包的物品
+        Object.keys(categories).forEach(category => {
+            const categoryItems = categories[category];
+            const categoryName = this.getItemCategoryText(category);
+            
+            const categorySection = document.createElement('div');
+            categorySection.className = 'category-section';
+            categorySection.innerHTML = `<h3 class="category-title">${categoryName}</h3>`;
+            
+            // 未打包的物品
+            const unpackedItems = categoryItems.filter(item => !item.packed);
+            if (unpackedItems.length > 0) {
+                unpackedItems.forEach(item => {
+                    const trip = this.currentTrips.find(t => t.id === item.tripId);
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'item-card';
+                    itemCard.innerHTML = `
+                        <div class="item-checkbox">
+                            <input type="checkbox" id="item-${item.id}" ${item.packed ? 'checked' : ''} 
+                                onchange="app.toggleItemPacked(${item.id})">
+                        </div>
+                        <div class="item-info">
+                            <h3>${this.escapeHtml(item.name)}</h3>
+                            ${trip ? `<span class="item-trip">旅行: ${this.escapeHtml(trip.name)}</span>` : ''}
+                            ${item.notes ? `<p class="item-notes">${this.escapeHtml(item.notes)}</p>` : ''}
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="app.editItem(${item.id})">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="app.deleteItem(${item.id})">删除</button>
+                        </div>
+                    `;
+                    categorySection.appendChild(itemCard);
+                });
+            }
+            
+            // 已打包的物品
+            const packedItems = categoryItems.filter(item => item.packed);
+            if (packedItems.length > 0) {
+                const packedSection = document.createElement('div');
+                packedSection.className = 'packed-section';
+                packedSection.innerHTML = `<h4 class="packed-title">已打包 (${packedItems.length})</h4>`;
+                
+                packedItems.forEach(item => {
+                    const trip = this.currentTrips.find(t => t.id === item.tripId);
+                    const itemCard = document.createElement('div');
+                    itemCard.className = 'item-card packed';
+                    itemCard.innerHTML = `
+                        <div class="item-checkbox">
+                            <input type="checkbox" id="item-${item.id}" ${item.packed ? 'checked' : ''} 
+                                onchange="app.toggleItemPacked(${item.id})">
+                        </div>
+                        <div class="item-info">
+                            <h3>${this.escapeHtml(item.name)}</h3>
+                            ${trip ? `<span class="item-trip">旅行: ${this.escapeHtml(trip.name)}</span>` : ''}
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-sm btn-danger" onclick="app.deleteItem(${item.id})">删除</button>
+                        </div>
+                    `;
+                    packedSection.appendChild(itemCard);
+                });
+                
+                categorySection.appendChild(packedSection);
+            }
+            
+            itemsList.appendChild(categorySection);
         });
     }
 
@@ -552,14 +1460,30 @@ class TravelAssistant {
 
     async toggleItemPacked(id) {
         try {
-            const item = this.currentItems.find(i => i.id === id);
-            if (item) {
-                await this.dbManager.updateItem(id, { isPacked: !item.isPacked });
-                await this.loadItems();
-                this.updateAllStats();
+            const item = this.currentItems.find(i => i.id === parseInt(id));
+            if (!item) {
+                console.error('找不到物品ID:', id);
+                return;
             }
+            
+            // 更新复选框状态
+            const checkbox = document.getElementById(`item-${id}`);
+            if (checkbox) {
+                checkbox.disabled = true; // 防止重复点击
+            }
+            
+            // 更新数据库
+            await this.dbManager.updateItem(parseInt(id), { packed: !item.packed });
+            
+            // 更新UI显示
+            await this.loadItems();
+            this.updateAllStats();
+            
+            // 显示提示
+            this.showNotification(item.packed ? `已取消打包：${item.name}` : `已打包：${item.name}`, 'success');
         } catch (error) {
             console.error('更新物品状态失败:', error);
+            this.showNotification('更新物品状态失败', 'error');
         }
     }
 
@@ -630,12 +1554,33 @@ class TravelAssistant {
 
     updateItemStats() {
         const totalItems = this.currentItems.length;
-        const packedItems = this.currentItems.filter(item => item.isPacked).length;
+        const packedItems = this.currentItems.filter(item => item.packed).length;
         const remainingItems = totalItems - packedItems;
+        const packingRate = totalItems > 0 ? Math.round((packedItems / totalItems) * 100) : 0;
 
-        document.getElementById('totalItems').textContent = totalItems;
-        document.getElementById('packedItems').textContent = packedItems;
-        document.getElementById('remainingItems').textContent = remainingItems;
+        // 更新打包进度条
+        const packingProgress = document.getElementById('packingProgress');
+        if (packingProgress) {
+            packingProgress.style.width = `${packingRate}%`;
+        }
+        
+        // 更新打包百分比
+        const packingPercentage = document.getElementById('packingPercentage');
+        if (packingPercentage) {
+            packingPercentage.textContent = `${packingRate}%`;
+        }
+        
+        // 更新其他统计数据
+        this.updateElementText('totalItems', totalItems);
+        this.updateElementText('packedItems', packedItems);
+        this.updateElementText('remainingItems', remainingItems);
+        this.updateElementText('totalItemsStats', totalItems);
+        this.updateElementText('packedItemsStats', packedItems);
+        this.updateElementText('packingRate', `${packingRate}%`);
+        
+        // 更新打包计数
+        this.updateElementText('packedCount', packedItems);
+        this.updateElementText('totalCount', totalItems);
     }
 
     updateOverallStats() {
@@ -663,7 +1608,7 @@ class TravelAssistant {
 
         // 行李统计
         const totalItems = this.currentItems.length;
-        const packedItems = this.currentItems.filter(item => item.isPacked).length;
+        const packedItems = this.currentItems.filter(item => item.packed).length;
         const packingRate = totalItems > 0 ? (packedItems / totalItems * 100) : 0;
 
         document.getElementById('totalItemsStats').textContent = totalItems;
@@ -1003,34 +1948,20 @@ class TravelAssistant {
     // 显示通知
     showNotification(message, type = 'info', duration = 3000) {
         const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-icon">${this.getNotificationIcon(type)}</span>
-                <span class="notification-message">${message}</span>
-                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
-            </div>
-        `;
-        
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            box-shadow: var(--shadow-xl);
-            z-index: var(--z-toast);
-            animation: slideInRight 0.3s ease-out;
-            max-width: 400px;
-        `;
+        notification.className = `toast toast-${type}`;
+        notification.textContent = message;
         
         document.body.appendChild(notification);
         
         setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-in';
-            setTimeout(() => notification.remove(), 300);
+            notification.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
         }, duration);
     }
     
@@ -1126,7 +2057,18 @@ class TravelAssistant {
             hour: '2-digit', 
             minute: '2-digit' 
         });
-        document.getElementById('currentTime').textContent = timeString;
+        const timeElement = document.getElementById('currentTime');
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+    }
+    
+    // 辅助方法，更新元素文本
+    updateElementText(elementId, text) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = text;
+        }
     }
 
     // 显示旅行详情
@@ -1259,9 +2201,9 @@ class TravelAssistant {
         
         if (!tripData.name || !tripData.destination || !tripData.startDate || !tripData.endDate) {
             alert('请填写所有必填字段');
-            return;
-        }
-        
+                return;
+            }
+
         try {
             await this.updateTrip(tripId, tripData);
             this.hideModal();
@@ -1275,9 +2217,9 @@ class TravelAssistant {
     // 删除旅行
     async deleteTrip(tripId) {
         if (!confirm('确定要删除这个旅行计划吗？此操作不可撤销。')) {
-            return;
-        }
-        
+                return;
+            }
+
         try {
             await this.removeTrip(tripId);
             this.loadPageData(this.getCurrentPage());
@@ -1357,9 +2299,9 @@ class TravelAssistant {
         
         if (!expenseData.name || !expenseData.amount || !expenseData.category || !expenseData.date) {
             alert('请填写所有必填字段');
-            return;
-        }
-        
+                return;
+            }
+
         try {
             await this.updateExpense(expenseId, expenseData);
             this.hideModal();
@@ -1373,9 +2315,9 @@ class TravelAssistant {
     // 删除支出
     async deleteExpense(expenseId) {
         if (!confirm('确定要删除这个支出记录吗？此操作不可撤销。')) {
-            return;
-        }
-        
+                return;
+            }
+
         try {
             await this.removeExpense(expenseId);
             this.loadPageData(this.getCurrentPage());
@@ -1429,7 +2371,7 @@ class TravelAssistant {
             `;
             
             this.showModal(content);
-        } catch (error) {
+                } catch (error) {
             console.error('编辑物品失败:', error);
             alert('加载编辑表单失败');
         }
@@ -1461,9 +2403,9 @@ class TravelAssistant {
     // 删除物品
     async deleteItem(itemId) {
         if (!confirm('确定要删除这个物品吗？此操作不可撤销。')) {
-            return;
-        }
-        
+                return;
+            }
+
         try {
             await this.removeItem(itemId);
             this.loadPageData(this.getCurrentPage());
@@ -1472,11 +2414,900 @@ class TravelAssistant {
             alert('删除失败，请重试');
         }
     }
+
+    // 获取单个旅行计划
+    async getTrip(id) {
+        return await this.dbManager.getTrip(id);
+    }
+
+    // 获取单个支出记录
+    async getExpense(id) {
+        return await this.dbManager.getExpense(id);
+    }
+
+    // 获取单个物品
+    async getItem(id) {
+        return await this.dbManager.getItem(id);
+    }
+
+    // 更新旅行计划
+    async updateTrip(id, updateData) {
+        return await this.dbManager.updateTrip(id, updateData);
+    }
+
+    // 更新支出记录
+    async updateExpense(id, updateData) {
+        return await this.dbManager.updateExpense(id, updateData);
+    }
+
+    // 更新物品
+    async updateItem(id, updateData) {
+        return await this.dbManager.updateItem(id, updateData);
+    }
+
+    // 删除旅行计划
+    async removeTrip(id) {
+        return await this.dbManager.removeTrip(id);
+    }
+
+    // 删除支出记录
+    async removeExpense(id) {
+        return await this.dbManager.removeExpense(id);
+    }
+
+    // 删除物品
+    async removeItem(id) {
+        return await this.dbManager.removeItem(id);
+    }
+
+    // 清空所有数据
+    async clearAllData() {
+        try {
+            await this.dbManager.clearTrips();
+            await this.dbManager.clearExpenses();
+            await this.dbManager.clearItems();
+            this.log('所有数据已清空', 'success');
+            this.loadAllData();
+        } catch (error) {
+            console.error('清空数据失败:', error);
+            this.log('清空数据失败', 'error');
+        }
+    }
+
+    // 处理快速操作
+    handleQuickAction(action) {
+        switch (action) {
+            case 'add-trip':
+                this.showAddModal('trips');
+                break;
+            case 'add-expense':
+                this.showAddModal('budget');
+                break;
+            case 'add-item':
+                this.showAddModal('checklist');
+                break;
+            case 'share':
+                this.shareCurrentPage();
+                break;
+            case 'export':
+                this.exportAllData();
+                break;
+            case 'import':
+                this.importData();
+                break;
+            default:
+                console.log('未知操作:', action);
+        }
+    }
+
+    // 处理搜索
+    handleSearch(query) {
+        const currentPage = this.getCurrentPage();
+        switch (currentPage) {
+            case 'trips':
+                this.searchTrips(query);
+                break;
+            case 'budget':
+                this.searchExpenses(query);
+                break;
+            case 'checklist':
+                this.searchItems(query);
+                break;
+        }
+    }
+
+    // 显示过滤器模态框
+    showFilterModal() {
+        const currentPage = this.getCurrentPage();
+        let content = '';
+        
+        switch (currentPage) {
+            case 'trips':
+                content = this.getTripFilterContent();
+                break;
+            case 'budget':
+                content = this.getExpenseFilterContent();
+                break;
+            case 'checklist':
+                content = this.getItemFilterContent();
+                break;
+        }
+        
+        this.showModal('筛选', content);
+    }
+
+    // 显示添加模态框
+    showAddModal(type) {
+        let content = '';
+        let title = '';
+        
+        switch (type) {
+            case 'trips':
+                title = '添加旅行计划';
+                content = this.getAddTripForm();
+                break;
+            case 'budget':
+                title = '添加支出记录';
+                content = this.getAddExpenseForm();
+                break;
+            case 'checklist':
+                title = '添加行李物品';
+                content = this.getAddItemForm();
+                break;
+        }
+        
+        this.showModal(title, content);
+    }
+
+    // 分享当前页面
+    shareCurrentPage() {
+        const currentPage = this.getCurrentPage();
+        const pageNames = {
+            'home': '首页',
+            'trips': '旅行计划',
+            'budget': '预算管理',
+            'checklist': '行李清单'
+        };
+        
+        const pageName = pageNames[currentPage] || '页面';
+        
+        if (navigator.share) {
+            navigator.share({
+                title: `旅行助手 - ${pageName}`,
+                text: `我正在使用旅行助手管理${pageName}`,
+                url: window.location.href
+            });
+        } else {
+            // 复制链接到剪贴板
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                this.showToast('链接已复制到剪贴板');
+            });
+        }
+    }
+
+    // 显示通知
+    showNotifications() {
+        const notifications = [
+            { title: '旅行提醒', message: '您的北京之旅还有3天开始', time: '2分钟前' },
+            { title: '预算提醒', message: '本月支出已超过预算的80%', time: '1小时前' },
+            { title: '打包提醒', message: '您还有5件物品未打包', time: '3小时前' }
+        ];
+        
+        let content = '<div class="notifications-list">';
+        notifications.forEach(notification => {
+            content += `
+                <div class="notification-item">
+                    <div class="notification-header">
+                        <h4>${notification.title}</h4>
+                        <span class="notification-time">${notification.time}</span>
+                    </div>
+                    <p>${notification.message}</p>
+                </div>
+            `;
+        });
+        content += '</div>';
+        
+        this.showModal('通知', content);
+    }
+
+    // 提交添加旅行计划
+    async submitAddTrip() {
+        const tripName = document.getElementById('tripName').value.trim();
+        const destination = document.getElementById('tripDestination').value.trim();
+        const startDate = document.getElementById('tripStartDate').value;
+        const endDate = document.getElementById('tripEndDate').value;
+        const budget = document.getElementById('tripBudget').value.trim();
+        const notes = document.getElementById('tripNotes').value.trim();
+        
+        // 表单验证
+        if (!tripName || !destination || !startDate || !endDate) {
+            this.showNotification('请填写所有必填字段', 'error');
+            return;
+        }
+        
+        if (new Date(startDate) >= new Date(endDate)) {
+            this.showNotification('结束日期必须晚于开始日期', 'error');
+            return;
+        }
+        
+        const addBtn = document.getElementById('addTripBtn');
+        if (addBtn) addBtn.disabled = true;
+        
+        try {
+            await this.dbManager.addTrip({
+                name: tripName,
+                destination,
+                startDate,
+                endDate,
+                budget: budget ? parseFloat(budget) : 0,
+                notes
+            });
+            
+            this.hideModal();
+            await this.loadTrips();
+            this.updateAllStats();
+            this.showNotification('旅行计划创建成功！', 'success');
+        } catch (error) {
+            console.error('添加旅行计划失败:', error);
+            this.showNotification('创建失败: ' + error.message, 'error');
+        } finally {
+            if (addBtn) addBtn.disabled = false;
+        }
+    }
+
+    // 提交添加支出记录
+    async submitAddExpense() {
+        const name = document.getElementById('expenseName').value.trim();
+        const amount = document.getElementById('expenseAmount').value.trim();
+        const category = document.getElementById('expenseCategory').value;
+        const tripId = document.getElementById('expenseTrip').value;
+        const date = document.getElementById('expenseDate').value;
+        const notes = document.getElementById('expenseNotes').value.trim();
+
+        if (!name) {
+            this.showNotification('请填写项目名称', 'error');
+            document.getElementById('expenseName').focus();
+            return;
+        }
+
+        if (!amount || parseFloat(amount) <= 0) {
+            this.showNotification('请填写有效金额', 'error');
+            document.getElementById('expenseAmount').focus();
+            return;
+        }
+        
+        if (!category) {
+            this.showNotification('请选择分类', 'error');
+            document.getElementById('expenseCategory').focus();
+            return;
+        }
+        
+        if (!date) {
+            this.showNotification('请选择日期', 'error');
+            document.getElementById('expenseDate').focus();
+            return;
+        }
+
+        const addBtn = document.getElementById('addExpenseBtn');
+        if (addBtn) addBtn.disabled = true;
+
+        try {
+            await this.dbManager.addExpense({
+                name,
+                amount: parseFloat(amount),
+                category,
+                tripId: tripId || null,
+                date,
+                notes
+            });
+
+            this.hideModal();
+            await this.loadExpenses();
+            this.updateAllStats();
+            this.showNotification('支出记录添加成功', 'success');
+        } catch (error) {
+            console.error('添加支出失败:', error);
+            this.showNotification('添加支出失败: ' + error.message, 'error');
+        } finally {
+            if (addBtn) addBtn.disabled = false;
+        }
+    }
+
+    // 提交添加物品
+    async submitAddItem() {
+        const name = document.getElementById('itemName').value.trim();
+        const category = document.getElementById('itemCategory').value;
+        const tripId = document.getElementById('itemTrip').value;
+        const quantity = parseInt(document.getElementById('itemQuantity').value) || 1;
+        const notes = document.getElementById('itemNotes').value.trim();
+
+        if (!name) {
+            this.showNotification('请填写物品名称', 'error');
+            document.getElementById('itemName').focus();
+            return;
+        }
+
+        if (!category) {
+            this.showNotification('请选择物品分类', 'error');
+            document.getElementById('itemCategory').focus();
+            return;
+        }
+
+        const addBtn = document.getElementById('addItemBtn');
+        if (addBtn) addBtn.disabled = true;
+
+        try {
+            // 如果数量大于1，创建多个物品
+            for (let i = 0; i < quantity; i++) {
+                await this.dbManager.addItem({
+                    name: quantity > 1 ? `${name} (${i+1})` : name,
+                    category,
+                    tripId: tripId || null,
+                    notes,
+                    packed: false
+                });
+            }
+
+            this.hideModal();
+            await this.loadItems();
+            this.updateAllStats();
+            this.showNotification('物品添加成功', 'success');
+        } catch (error) {
+            console.error('添加物品失败:', error);
+            this.showNotification('添加失败: ' + error.message, 'error');
+        } finally {
+            if (addBtn) addBtn.disabled = false;
+        }
+    }
+
+    // 处理表单提交
+    handleFormSubmit(form) {
+        const formType = form.getAttribute('data-type');
+        
+        switch (formType) {
+            case 'trip':
+                this.submitAddTrip();
+                break;
+            case 'expense':
+                this.submitAddExpense();
+                break;
+            case 'item':
+                this.submitAddItem();
+                break;
+        }
+    }
+
+    // 绑定触摸事件
+    bindTouchEvents() {
+        let startX = 0;
+        let startY = 0;
+        let endX = 0;
+        let endY = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            
+            // 检测滑动方向
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                if (Math.abs(deltaX) > 50) { // 最小滑动距离
+                    if (deltaX > 0) {
+                        // 向右滑动 - 返回上一页
+                        this.handleSwipeRight();
+                    } else {
+                        // 向左滑动 - 前进
+                        this.handleSwipeLeft();
+                    }
+                }
+            }
+        });
+    }
+
+    // 处理向右滑动
+    handleSwipeRight() {
+        const currentPage = this.getCurrentPage();
+        if (currentPage !== 'home') {
+            this.switchPage('home');
+        }
+    }
+
+    // 处理向左滑动
+    handleSwipeLeft() {
+        // 可以添加前进功能
+        console.log('向左滑动');
+    }
+
+    // 显示提示消息
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+
+    // 获取添加旅行表单
+    getAddTripForm() {
+        return `
+            <form class="add-form" data-type="trip">
+                <div class="form-group">
+                    <label for="tripName">旅行名称</label>
+                    <input type="text" id="tripName" required>
+                </div>
+                <div class="form-group">
+                    <label for="tripDestination">目的地</label>
+                    <input type="text" id="tripDestination" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tripStartDate">开始日期</label>
+                        <input type="date" id="tripStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tripEndDate">结束日期</label>
+                        <input type="date" id="tripEndDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tripBudget">预算 (¥)</label>
+                    <input type="number" id="tripBudget" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="tripNotes">备注</label>
+                    <textarea id="tripNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        `;
+    }
+
+    // 获取添加支出表单
+    getAddExpenseForm() {
+        return `
+            <form class="add-form" data-type="expense">
+                <div class="form-group">
+                    <label for="expenseName">支出名称</label>
+                    <input type="text" id="expenseName" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseAmount">金额 (¥)</label>
+                    <input type="number" id="expenseAmount" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseCategory">类别</label>
+                    <select id="expenseCategory" required>
+                        <option value="">选择类别</option>
+                        <option value="交通">交通</option>
+                        <option value="住宿">住宿</option>
+                        <option value="餐饮">餐饮</option>
+                        <option value="购物">购物</option>
+                        <option value="娱乐">娱乐</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expenseDate">日期</label>
+                    <input type="date" id="expenseDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseNotes">备注</label>
+                    <textarea id="expenseNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        `;
+    }
+
+    // 获取添加物品表单
+    getAddItemForm() {
+        return `
+            <form class="add-form" data-type="item">
+                <div class="form-group">
+                    <label for="itemName">物品名称</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemCategory">类别</label>
+                    <select id="itemCategory" required>
+                        <option value="">选择类别</option>
+                        <option value="衣物">衣物</option>
+                        <option value="电子设备">电子设备</option>
+                        <option value="洗漱用品">洗漱用品</option>
+                        <option value="证件">证件</option>
+                        <option value="药品">药品</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="itemNotes">备注</label>
+                    <textarea id="itemNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </div>
+            </form>
+        `;
+    }
+
+    // 获取筛选内容
+    getTripFilterContent() {
+        return `
+            <div class="filter-content">
+                <div class="form-group">
+                    <label>状态</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="planned" checked> 计划中</label>
+                        <label><input type="checkbox" value="ongoing" checked> 进行中</label>
+                        <label><input type="checkbox" value="completed" checked> 已完成</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>预算范围</label>
+                    <div class="range-inputs">
+                        <input type="number" placeholder="最小" min="0">
+                        <span>-</span>
+                        <input type="number" placeholder="最大" min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">重置</button>
+                    <button type="button" class="btn btn-primary" onclick="app.applyFilter()">应用</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getExpenseFilterContent() {
+        return `
+            <div class="filter-content">
+                <div class="form-group">
+                    <label>类别</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="交通" checked> 交通</label>
+                        <label><input type="checkbox" value="住宿" checked> 住宿</label>
+                        <label><input type="checkbox" value="餐饮" checked> 餐饮</label>
+                        <label><input type="checkbox" value="购物" checked> 购物</label>
+                        <label><input type="checkbox" value="娱乐" checked> 娱乐</label>
+                        <label><input type="checkbox" value="其他" checked> 其他</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>金额范围</label>
+                    <div class="range-inputs">
+                        <input type="number" placeholder="最小" min="0">
+                        <span>-</span>
+                        <input type="number" placeholder="最大" min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">重置</button>
+                    <button type="button" class="btn btn-primary" onclick="app.applyFilter()">应用</button>
+                </div>
+            </div>
+        `;
+    }
+
+    getItemFilterContent() {
+        return `
+            <div class="filter-content">
+                <div class="form-group">
+                    <label>类别</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="衣物" checked> 衣物</label>
+                        <label><input type="checkbox" value="电子设备" checked> 电子设备</label>
+                        <label><input type="checkbox" value="洗漱用品" checked> 洗漱用品</label>
+                        <label><input type="checkbox" value="证件" checked> 证件</label>
+                        <label><input type="checkbox" value="药品" checked> 药品</label>
+                        <label><input type="checkbox" value="其他" checked> 其他</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>状态</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="packed" checked> 已打包</label>
+                        <label><input type="checkbox" value="unpacked" checked> 未打包</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">重置</button>
+                    <button type="button" class="btn btn-primary" onclick="app.applyFilter()">应用</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // 应用筛选
+    applyFilter() {
+        this.hideModal();
+        this.loadPageData(this.getCurrentPage());
+        this.showToast('筛选已应用');
+    }
+
+    // 获取所有旅行计划
+    async getAllTrips() {
+        return await this.dbManager.getAllTrips();
+    }
+
+    // 获取所有支出记录
+    async getAllExpenses() {
+        return await this.dbManager.getAllExpenses();
+    }
+
+    // 获取所有物品
+    async getAllItems() {
+        return await this.dbManager.getAllItems();
+    }
+
+    // 导出所有数据
+    exportAllData() {
+        Promise.all([
+            this.getAllTrips(),
+            this.getAllExpenses(),
+            this.getAllItems()
+        ]).then(([trips, expenses, items]) => {
+            const data = {
+                trips,
+                expenses,
+                items,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `travel-assistant-export-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            this.showToast('数据导出成功');
+        });
+    }
+
+    // 导入数据
+    importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        this.processImportedData(data);
+        } catch (error) {
+                        this.showToast('文件格式错误', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+        input.click();
+    }
+
+    // 处理导入的数据
+    async processImportedData(data) {
+        try {
+            if (data.trips) {
+                for (const trip of data.trips) {
+                    await this.addTrip(trip);
+                }
+            }
+            if (data.expenses) {
+                for (const expense of data.expenses) {
+                    await this.addExpense(expense);
+                }
+            }
+            if (data.items) {
+                for (const item of data.items) {
+                    await this.addItem(item);
+                }
+            }
+            
+            this.showToast('数据导入成功');
+            this.loadAllData();
+                } catch (error) {
+            this.showToast('数据导入失败', 'error');
+        }
+    }
+
+    // 显示添加旅行模态框
+    showAddTripModal() {
+        const content = `
+            <form class="add-form" data-type="trip" id="addTripForm">
+                <div class="form-group">
+                    <label for="tripName">旅行名称</label>
+                    <input type="text" id="tripName" required>
+                </div>
+                <div class="form-group">
+                    <label for="tripDestination">目的地</label>
+                    <input type="text" id="tripDestination" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tripStartDate">开始日期</label>
+                        <input type="date" id="tripStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tripEndDate">结束日期</label>
+                        <input type="date" id="tripEndDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tripBudget">预算 (¥)</label>
+                    <input type="number" id="tripBudget" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="tripNotes">备注</label>
+                    <textarea id="tripNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="addTripBtn" onclick="app.submitAddTrip()">添加</button>
+                </div>
+            </form>
+        `;
+        this.showModal('添加旅行计划', content);
+        
+        // 设置默认日期
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tripStartDate').value = today;
+        
+        // 计算默认结束日期（当前日期+7天）
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        document.getElementById('tripEndDate').value = nextWeek.toISOString().split('T')[0];
+    }
+
+    // 显示添加支出模态框
+    showAddExpenseModal() {
+        // 准备旅行计划选项
+        let tripOptions = '<option value="">选择旅行计划</option>';
+        this.currentTrips.forEach(trip => {
+            tripOptions += `<option value="${trip.id}">${this.escapeHtml(trip.name)}</option>`;
+        });
+        
+        const content = `
+            <form class="add-form" data-type="expense" id="addExpenseForm">
+                <div class="form-group">
+                    <label for="expenseName">支出项目</label>
+                    <input type="text" id="expenseName" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseAmount">金额 (¥)</label>
+                    <input type="number" id="expenseAmount" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="expenseCategory">分类</label>
+                    <select id="expenseCategory" required>
+                        <option value="">选择分类</option>
+                        <option value="transportation">交通</option>
+                        <option value="accommodation">住宿</option>
+                        <option value="food">餐饮</option>
+                        <option value="entertainment">娱乐</option>
+                        <option value="shopping">购物</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expenseTrip">关联旅行</label>
+                    <select id="expenseTrip">
+                        ${tripOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="expenseDate">日期</label>
+                    <input type="date" id="expenseDate" required value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <div class="form-group">
+                    <label for="expenseNotes">备注</label>
+                    <textarea id="expenseNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="addExpenseBtn" onclick="app.submitAddExpense()">添加</button>
+                </div>
+            </form>
+        `;
+        
+        this.showModal('添加支出记录', content);
+    }
+
+    // 显示添加物品模态框
+    showAddItemModal() {
+        // 准备旅行计划选项
+        let tripOptions = '<option value="">选择旅行计划</option>';
+        this.currentTrips.forEach(trip => {
+            tripOptions += `<option value="${trip.id}">${this.escapeHtml(trip.name)}</option>`;
+        });
+        
+        const content = `
+            <form class="add-form" data-type="item" id="addItemForm">
+                <div class="form-group">
+                    <label for="itemName">物品名称</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemCategory">分类</label>
+                    <select id="itemCategory" required>
+                        <option value="">选择分类</option>
+                        <option value="documents">证件</option>
+                        <option value="electronics">电子产品</option>
+                        <option value="clothing">衣物</option>
+                        <option value="toiletries">洗漱用品</option>
+                        <option value="medicine">药品</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="itemTrip">关联旅行</label>
+                    <select id="itemTrip">
+                        ${tripOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="itemQuantity">数量</label>
+                    <input type="number" id="itemQuantity" value="1" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="itemNotes">备注</label>
+                    <textarea id="itemNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="app.hideModal()">取消</button>
+                    <button type="button" class="btn btn-primary" id="addItemBtn" onclick="app.submitAddItem()">添加</button>
+                </div>
+            </form>
+        `;
+        
+        this.showModal('添加行李物品', content);
+    }
+
+    // 显示快速操作菜单
+    showQuickActions() {
+        this.toggleQuickActions();
+    }
+
+    // 记录日志
+    log(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+    }
 }
 
 // 启动应用
 let app;
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     app = new TravelAssistant();
+    // 等待应用初始化完成
+    await app.init();
 });
+
 

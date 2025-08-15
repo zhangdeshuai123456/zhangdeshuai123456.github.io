@@ -1,31 +1,25 @@
 @echo off
-chcp 65001 >nul
+echo 启动旅行助手应用...
 echo.
-echo ========================================
-echo    IndexedDB 演示服务器启动脚本
-echo ========================================
-echo.
-
-REM 检查Node.js是否安装
+echo 正在检查Node.js...
 node --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ❌ 错误：未检测到Node.js
-    echo.
-    echo 请先安装Node.js：
-    echo 1. 访问 https://nodejs.org/
-    echo 2. 下载并安装Node.js
-    echo 3. 重新运行此脚本
-    echo.
+if errorlevel 1 (
+    echo 错误: 未找到Node.js，请先安装Node.js
+    echo 下载地址: https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo ✅ Node.js 已安装
+echo Node.js已安装
 echo.
+echo 正在安装依赖...
+npm install
 
-REM 启动服务器
-echo 🚀 正在启动服务器...
 echo.
-node server.js
+echo 启动服务器...
+echo 应用将在 http://localhost:3000 运行
+echo 按 Ctrl+C 停止服务器
+echo.
+npm start
 
 pause
